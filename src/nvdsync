@@ -1,0 +1,118 @@
+#! /bin/sh
+#
+# Copyright (c) 2013 Twitter, Inc.
+#
+# Originally written by Jan Schaumann <jschauma@netmeister.org> in May 2013.
+#
+# This script fetches NIST's NVD, syncs it into a local database and
+# cross-references CVEs with Jira tickets.
+
+set -e
+
+###
+### Globals
+###
+
+umask 077
+
+NVD_URL="https://nvd.nist.gov/static/feeds/xml/cve/nvdcve-2.0-recent.xml"
+
+PROGNAME="${0##*/}"
+VERBOSITY=0
+VFLAGS=""
+
+###
+### Functions
+###
+
+cleanup() {
+	rm -fr "${TDIR}"
+}
+
+crossReferenceWithJira() {
+	verbose "Cross-referencing with Jira..."
+	nvdXjira ${VFLAGS} -n ${NVDXJIRA_FLAGS}
+}
+
+updateLocalDatabase() {
+	verbose "Updating local database..."
+	verbose "Fetching ${NVD_URL}..." 2
+
+	eval curl -s ${CURL_FLAGS} "${NVD_URL}" | {
+		verbose "Processing XML and updating sqlite3 database..." 2
+		nvd2sqlite3 ${VFLAGS} ${NVD2SQLITE_FLAGS}
+	}
+}
+
+usage() {
+	cat <<EOH
+Usage: ${PROGNAME} [-hv]
+	-h  print this help and exit
+	-v  be verbose
+EOH
+}
+
+
+# purpose : check that all important variables are set correctly
+# input   : none
+# output  : none, globals may have been modified, may abort on error
+
+varCheck() {
+	local file
+
+	verbose "Checking that all variables look ok..."
+}
+
+
+verbose() {
+	local msg="${1}"
+	local level="${2:-1}"
+	local i=0
+
+	if [ ${level} -le ${VERBOSITY} ]; then
+		while [ ${i} -lt ${level} ]; do
+			printf "=" >&2
+			i=$(( ${i} + 1 ))
+		done
+		echo "> ${msg}" >&2
+	fi
+}
+
+
+###
+### Main
+###
+
+trap 'cleanup' 0
+
+while getopts 'hv' opt; do
+	case ${opt} in
+		h\?)
+			usage
+			exit 0
+			# NOTREACHED
+		;;
+		v)
+			VERBOSITY=$(( ${VERBOSITY} + 1 ))
+			VFLAGS="-v ${VFLAGS}"
+		;;
+		*)
+			usage
+			exit 1
+			# NOTREACHED
+		;;
+	esac
+done
+shift $(($OPTIND - 1))
+
+if [ $# -ne 0 ]; then
+	usage
+	exit 1
+	# NOTREACHED
+fi
+
+varCheck
+updateLocalDatabase
+crossReferenceWithJira
+
+exit 0
