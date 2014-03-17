@@ -4,10 +4,10 @@
 #
 # Originally written by Jan Schaumann <jschauma@netmeister.org> in May 2013.
 #
-# This script fetches NIST's NVD, syncs it into a local database and
-# cross-references CVEs with Jira tickets.
+# This script fetches NIST's NVD data and cross-references the CVEs with
+# Jira tickets.
 
-set -e
+#set -e
 
 ###
 ### Globals
@@ -15,9 +15,11 @@ set -e
 
 umask 077
 
-NVD_URL="https://nvd.nist.gov/static/feeds/xml/cve/nvdcve-2.0-recent.xml"
+NVD_RECENT_URL="https://nvd.nist.gov/feeds/xml/cve/nvdcve-2.0-recent.xml"
+NVD_MODIFIED_URL="https://nvd.nist.gov/feeds/xml/cve/nvdcve-2.0-modified.xml"
 
 PROGNAME="${0##*/}"
+TDIR="$(mktemp -d "${TMPDIR:-/tmp}/${PROGNAME}.XXXX")"
 VERBOSITY=0
 VFLAGS=""
 
@@ -31,17 +33,38 @@ cleanup() {
 
 crossReferenceWithJira() {
 	verbose "Cross-referencing with Jira..."
-	nvdXjira ${VFLAGS} -n ${NVDXJIRA_FLAGS}
+	(
+		# XXX: This is far from ideal: wget(1) requires
+		# the proxy, but nvdXjira does not.  nvdXjira uses
+		# python's urllib2, which will use a proxy if the
+		# https_proxy environment variable is set.  So we nuke it
+		# here.  If you ever want to use the proxy from the
+		# environment in nvdXjira in this context, you're SOL.
+		unset https_proxy
+		cd ${TDIR}
+		for f in *; do
+			verbose "Processing ${f}..." 2
+			nvdXjira ${VFLAGS} -n ${NVDXJIRA_FLAGS} <${f}
+		done
+	)
 }
 
-updateLocalDatabase() {
-	verbose "Updating local database..."
-	verbose "Fetching ${NVD_URL}..." 2
+fetchNVDData() {
+	local code file url
 
-	eval curl -s ${CURL_FLAGS} "${NVD_URL}" | {
-		verbose "Processing XML and updating sqlite3 database..." 2
-		nvd2sqlite3 ${VFLAGS} ${NVD2SQLITE_FLAGS}
-	}
+	verbose "Fetching NVD Data..."
+
+	for url in ${NVD_RECENT_URL} ${NVD_MODIFIED_URL}; do
+		verbose "Fetching ${url}..." 2
+		file=$(basename ${url})
+
+		eval wget --quiet ${WGET_FLAGS} -O "${TDIR}/${file}" "${url}"
+		if [ $? -gt 0 ]; then
+			echo "Unable to fetch '${url}'." >&2
+			exit 1
+			# NOTREACHED
+		fi
+	done
 }
 
 usage() {
@@ -112,7 +135,7 @@ if [ $# -ne 0 ]; then
 fi
 
 varCheck
-updateLocalDatabase
+fetchNVDData
 crossReferenceWithJira
 
 exit 0

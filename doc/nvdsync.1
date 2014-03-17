@@ -1,9 +1,9 @@
-.Dd May 6, 2013
+.Dd March 11, 2013
 .Dt NVDSYNC 1
 .Os
 .Sh NAME
 .Nm nvdsync
-.Nd fetch NIST's NVD, sync into a local database and cross-reference with Jira
+.Nd fetch NIST's NVD data and cross-reference it with Jira
 .Sh SYNOPSIS
 .Nm
 .Op Fl hv
@@ -11,13 +11,10 @@
 The
 .Nm
 utility wraps the
-.Xr nvd2sqlite3 1
-and
 .Xr nvdXjira 1
-tools to provide a simple script suitable to be run from a cronjob in
-order to fetch NIST's National Vulnerability Database, sync it into a
-local sqlite3 database and then cross-reference that database with a Jira
-instance.
+tool to provide a simple script suitable to be run from a cronjob in order
+to fetch NIST's National Vulnerability Database and then cross-reference
+that database with a Jira instance.
 .Sh OPTIONS
 .Nm
 supports the following options:
@@ -31,14 +28,10 @@ Can be specified multiple times.
 .Sh ENVIRONMENT
 .Nm
 honors the following environment variables:
-.Bl -tag -width NVD2SQLITE_FLAGS_
-.It CURL_FLAGS
+.Bl -tag -width NVDXJIRA_FLAGS_
+.It WGET_FLAGS
 Flags to pass to
-.Xr curl 1 ,
-if any.
-.It NVD2SQLITE3_FLAGS
-Flags to pass to
-.Xr nvd2sqlite3 1 ,
+.Xr wget 1 ,
 if any.
 .It NVDXJIRA_FLAGS
 Flags to pass to
@@ -48,13 +41,11 @@ if any.
 .Sh EXIT STATUS
 .Ex -std
 .Sh SEE ALSO
-.Xr nvd2sqlite3 1 ,
 .Xr nvdXjira 1 ,
-.Xr sqlite3 1 ,
 .Xr yvc 1
 .Sh HISTORY
 .Nm
 was originally written by
 .An Jan Schaumann
-.Aq jschauma@netmeister.org
+.Aq jschauma@twitter.com
 in May 2013.

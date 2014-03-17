@@ -1,17 +1,15 @@
 NVDSYNC(1)		NetBSD General Commands Manual		    NVDSYNC(1)
 
 NAME
-     nvdsync -- fetch NIST's NVD, sync into a local database and cross-refer-
-     ence with Jira
+     nvdsync -- fetch NIST's NVD data and cross-reference it with Jira
 
 SYNOPSIS
      nvdsync [-hv]
 
 DESCRIPTION
-     The nvdsync utility wraps the nvd2sqlite3(1) and nvdXjira(1) tools to
-     provide a simple script suitable to be run from a cronjob in order to
-     fetch NIST's National Vulnerability Database, sync it into a local
-     sqlite3 database and then cross-reference that database with a Jira
+     The nvdsync utility wraps the nvdXjira(1) tool to provide a simple script
+     suitable to be run from a cronjob in order to fetch NIST's National Vul-
+     nerability Database and then cross-reference that database with a Jira
      instance.
 
 OPTIONS
@@ -24,20 +22,18 @@ OPTIONS
 ENVIRONMENT
      nvdsync honors the following environment variables:
 
-     CURL_FLAGS		Flags to pass to curl(1), if any.
+     WGET_FLAGS	      Flags to pass to wget(1), if any.
 
-     NVD2SQLITE3_FLAGS	Flags to pass to nvd2sqlite3(1), if any.
-
-     NVDXJIRA_FLAGS	Flags to pass to nvdXjira(1), if any.
+     NVDXJIRA_FLAGS   Flags to pass to nvdXjira(1), if any.
 
 EXIT STATUS
      The nvdsync utility exits 0 on success, and >0 if an error occurs.
 
 SEE ALSO
-     nvd2sqlite3(1), nvdXjira(1), sqlite3(1), yvc(1)
+     nvdXjira(1), yvc(1)
 
 HISTORY
-     nvdsync was originally written by Jan Schaumann <jschauma@netmeister.org>
-     in May 2013.
+     nvdsync was originally written by Jan Schaumann <jschauma@twitter.com> in
+     May 2013.
 
-NetBSD 5.0			  May 6, 2013			    NetBSD 5.0
+NetBSD 5.0			March 11, 2013			    NetBSD 5.0
